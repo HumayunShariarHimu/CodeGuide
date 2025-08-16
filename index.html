@@ -1,0 +1,602 @@
+ <!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CodeGuide</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#fff;
+      --accent:#0b76d1;
+      --muted:#556;
+      --pill:#eef7ff;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Noto Sans Bengali", "Segoe UI", Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:#0f1720;
+      padding:24px;
+      -webkit-font-smoothing:antialiased;
+    }
+    .container{max-width:1100px;margin:0 auto;}
+    header{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+    h1{margin:0;color:var(--accent);font-size:20px}
+    .intro{color:var(--muted);font-size:14px;margin-top:6px}
+    .controls{display:flex;gap:12px;align-items:center;margin:18px 0;flex-wrap:wrap}
+    select,input[type="text"]{
+      padding:10px 12px;border-radius:10px;border:1px solid #d9e6f4;background:#fff;font-size:14px;
+      min-width:220px;
+    }
+    button{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+    button.ghost{background:#fff;color:var(--accent);border:1px solid #d9e6f4}
+    .layout{display:grid;grid-template-columns: 1fr 360px;gap:18px}
+    @media (max-width:980px){ .layout{grid-template-columns:1fr} }
+    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:0 10px 30px rgba(11,35,60,0.06)}
+    h2{color:var(--accent);margin:6px 0 10px 0}
+    .small{font-size:13px;color:var(--muted)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:640px){ .grid2{grid-template-columns:1fr} }
+
+    ul{margin:8px 0 12px 18px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--pill);color:var(--accent);font-weight:600;margin:6px 8px 6px 0;font-size:13px}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .note{background:#fff3cd;color:#664d03;padding:10px;border-radius:10px;margin-top:12px}
+    /* Accordion for right panel */
+    .accordion { border-radius:10px; overflow:hidden; }
+    .acc-btn{display:block;width:100%;text-align:left;padding:12px;background:#f1f7ff;border:none;cursor:pointer;font-weight:700;color:var(--accent);border-bottom:1px solid #e8f1fb}
+    .acc-panel{display:none;padding:12px;background:#fff}
+    .acc-panel ul{margin:6px 0 0 18px}
+    .meta{font-size:13px;color:var(--muted);margin-bottom:8px}
+    /* footer */
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+    /* responsive table-like lists */
+    .detail-row{display:flex;gap:12px;flex-wrap:wrap}
+    .detail-col{flex:1;min-width:220px}
+    .search-hint{font-size:13px;color:var(--muted);margin-left:6px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>CodeGuide</h1>
+        <div class="intro">Programming Language শেখার সবকিছুই....</div>
+      </div>
+    </header>
+
+    <!-- Controls: language select, search, show all -->
+    <div class="controls">
+      <label for="langSelect" class="small">ল্যাঙ্গুয়েজ:</label>
+      <select id="langSelect" aria-label="Select language">
+        <option value="">-- একটি ল্যাঙ্গুয়েজ নির্বাচন করুন --</option>
+      </select>
+
+      <input type="text" id="searchInput" placeholder="কিওয়ার্ড দিয়ে খুঁজুন (উদাঃ web, ml, flutter)" />
+
+      <button id="showAll">Show All (সংক্ষিপ্ত তালিকা)</button>
+      <button id="reset" class="ghost">Reset</button>
+      <div class="search-hint small">Tip: ড্রপডাউন থেকে সিলেক্ট করুন অথবা সার্চ দিয়ে দ্রুত ফিল্টার করুন</div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: main info card -->
+      <div>
+        <div id="infoCard" class="card" style="display:none;">
+          <!-- ডাইনামিক কন্টেন্ট এখানে যাবে -->
+        </div>
+
+        <div id="allCard" class="card" style="display:none;">
+          <h2>সমস্ত ল্যাঙ্গুয়েজ — সংক্ষিপ্ত ওভারভিউ</h2>
+          <div id="allList"></div>
+          <div class="note">প্রতিটি আইটেমে ক্লিক করলে ভেতরের ডিটেইলস দেখা যাবে।</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: relation / learn / tools / ai usage accordion -->
+      <aside>
+        <div class="card accordion">
+          <button class="acc-btn" data-acc="rel">ল্যাঙ্গুয়েজ সম্পর্ক (Relationships)</button>
+          <div class="acc-panel" id="rel">
+            <div class="small">কীভাবে ভাষাগুলো একে অপরের সাথে সম্পর্কিত — মূল ধারনা ও অনুপ্রেরণা</div>
+            <ul id="relList"></ul>
+          </div>
+
+          <button class="acc-btn" data-acc="learn">কিভাবে শেখা যায় (Learning Paths)</button>
+          <div class="acc-panel" id="learn">
+            <div class="small">শুরু থেকে অ্যাডভান্স লেভেল পর্যন্ত বাস্তব উপায়</div>
+            <ul id="learnList"></ul>
+          </div>
+
+          <button class="acc-btn" data-acc="tools">প্রয়োজনীয় টুলস (Tools)</button>
+          <div class="acc-panel" id="toolsAcc">
+            <div class="small">IDE, Debugging, Version Control, DB, Container ইত্যাদি</div>
+            <ul id="toolsList"></ul>
+          </div>
+
+          <button class="acc-btn" data-acc="ai">AI দ্বারা সমস্যা সমাধান (AI Usage)</button>
+          <div class="acc-panel" id="ai">
+            <div class="small">কোড জেনারেশন, ডিবাগিং, রিভিউ, অপটিমাইজেশন ইত্যাদি</div>
+            <ul id="aiList"></ul>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3 class="small">দ্রুত লিঙ্ক (Quick Links)</h3>
+          <div class="detail-row">
+            <div class="detail-col"><a href="https://www.freecodecamp.org" target="_blank">FreeCodeCamp</a></div>
+            <div class="detail-col"><a href="https://developer.mozilla.org" target="_blank">MDN Web Docs</a></div>
+            <div class="detail-col"><a href="https://www.coursera.org" target="_blank">Coursera</a></div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="small">চাহিলে আমি স্থানীয় (বাংলা) রিসোর্স লিংকও অ্যাড করে দেব।</div>
+        </div>
+      </aside>
+    </div>
+
+    <footer><a href="https://github.com/HumayunShariarHimu">Humayun Shariar Himu</a>
+</footer>
+  </div>
+
+  <script>
+/* ============================
+   ডেটা অংশ — প্রতিটি ল্যাঙ্গুয়েজের সম্পূর্ণ তথ্য
+   ============================ */
+const LANG = {
+  python:{
+    name:"Python",
+    summary:"সহজ সিনট্যাক্স, ডেটা সায়েন্স ও মেশিন লার্নিং লাইব্রেরি সমৃদ্ধ — নতুনদের জন্য খুব উপযুক্ত।",
+    domains:["Data Science","Machine Learning / AI","Web Development (Django, Flask)","Scripting / Automation","DevOps scripting"],
+    frameworks:["Django","Flask","FastAPI","PyTorch","TensorFlow","Pandas","NumPy","Scikit-learn"],
+    tools:["Jupyter Notebook","PyCharm","VS Code","Anaconda","pip","virtualenv","Docker"],
+    level:"Beginner → Advanced",
+    notes:"ডেটা সায়েন্স শিখতে Python অত্যাবশ্যক।"
+  },
+  javascript:{
+    name:"JavaScript",
+    summary:"ওয়েব ব্রাউজারের ডিফল্ট ভাষা — ফ্রন্টএন্ড ও নোড জেস ব্যাকএন্ডে ব্যবহৃত।",
+    domains:["Frontend Web","Backend (Node.js)","Desktop (Electron)","Mobile (React Native)"],
+    frameworks:["React","Vue.js","Angular","Node.js/Express","Next.js","Nuxt.js"],
+    tools:["VS Code","npm/yarn","Webpack","Babel","Chrome DevTools","ESLint","Prettier"],
+    level:"Beginner → Advanced",
+    notes:"ওয়েব ডেভেলপমেন্টে অপরিহার্য; TypeScript ব্যবহার করলে বড় প্রোজেক্টে নিরাপদ।"
+  },
+  typescript:{
+    name:"TypeScript",
+    summary:"JavaScript-এর ওপরে টাইপ সিস্টেম যুক্ত; বড় প্রোজেক্টে maintainability বাড়ায়।",
+    domains:["Large-scale Web Apps","Frontend Frameworks","Backend (Node.js)"],
+    frameworks:["Angular","NestJS","Next.js (with TS)"],
+    tools:["VS Code","tsc","eslint","prettier"],
+    level:"Intermediate → Advanced",
+    notes:"JS কোডবেইস বড় হলে TypeScript ব্যবহার করুন।"
+  },
+  java:{
+    name:"Java",
+    summary:"স্ট্যাটিক টাইপ, JVM-ভিত্তিক ভাষা; এন্টারপ্রাইজ ব্যাকএন্ড ও অ্যান্ড্রয়েডে জনপ্রিয়।",
+    domains:["Android Apps","Enterprise Backend","Web Services"],
+    frameworks:["Spring Boot","Hibernate","Maven/Gradle"],
+    tools:["IntelliJ IDEA","Eclipse","JDK","Maven","Gradle"],
+    level:"Intermediate → Advanced",
+    notes:"Enterprise-এ Java এখনও ব্যাপকভাবে ব্যবহৃত।"
+  },
+  c:{
+    name:"C",
+    summary:"লো-লেভেল ল্যাঙ্গুয়েজ; অপারেটিং সিস্টেম ও এমবেডেড ডিভাইসে ব্যবহৃত।",
+    domains:["System Programming","Embedded Systems","OS Kernels"],
+    frameworks:[],
+    tools:["GCC/Clang","Make/CMake","GDB"],
+    level:"Advanced",
+    notes:"মেমরি ম্যানেজমেন্ট নিজে করতে হয়—শুরুতে কঠিন।"
+  },
+  cpp:{
+    name:"C++",
+    summary:"C-এর উপরে অবজেক্ট-ওরিয়েন্টেড ও পারফরম্যান্স ফিচার; গেম/রিয়েল-টাইম সিস্টেমে ব্যবহৃত।",
+    domains:["Game Development","High Performance Apps","System Software"],
+    frameworks:["Unreal Engine","Qt"],
+    tools:["Visual Studio","CLion","GCC/Clang","CMake","Valgrind"],
+    level:"Advanced",
+    notes:"স্ট্যান্ডার্ড টেমপ্লেট লাইব্রেরি (STL) অনেক কাজে লাগে।"
+  },
+  csharp:{
+    name:"C#",
+    summary:".NET ইকোসিস্টেম-ভিত্তিক; উইন্ডোজ ও ইউনিটি গেম ডেভে জনপ্রিয়।",
+    domains:["Windows Apps","Game Dev (Unity)","Web (ASP.NET)"],
+    frameworks:[".NET/.NET Core","ASP.NET","Unity"],
+    tools:["Visual Studio","Rider",".NET SDK","NuGet"],
+    level:"Intermediate",
+    notes:"Unity দিয়ে গেম বানাতে C# শেখা ভালো।"
+  },
+  php:{
+    name:"PHP",
+    summary:"ওয়েব সার্ভার-সাইড ভাষা; অনেক CMS (WordPress) এটিতেই নির্মিত।",
+    domains:["Web Backends","Content Management (WordPress)"],
+    frameworks:["Laravel","Symfony","CodeIgniter"],
+    tools:["PHP CLI","Composer","XAMPP","PhpStorm"],
+    level:"Beginner → Intermediate",
+    notes:"ওয়েব ব্যাকএন্ড দ্রুত তৈরি করতে Laravel ভালো অপশন।"
+  },
+  ruby:{
+    name:"Ruby",
+    summary:"সহজ ও সুখকর সিনট্যাক্স; Rails ফ্রেমওয়ার্ক দিয়ে দ্রুত প্রোটোটাইপিং।",
+    domains:["Web Apps","Prototyping"],
+    frameworks:["Ruby on Rails","Sinatra"],
+    tools:["Ruby","Bundler","Rails","RVM/rbenv"],
+    level:"Beginner → Intermediate",
+    notes:"Rails টুলিং-এর জন্য still productive।"
+  },
+  go:{
+    name:"Go",
+    summary:"সরলতা ও কনকারেন্সিতে দুর্দান্ত; ক্লাউড/নেটওয়ার্ক সার্ভিসে ব্যবহৃত।",
+    domains:["Backend APIs","Cloud Services","Microservices","CLI Tools"],
+    frameworks:["Gin","Echo"],
+    tools:["Go toolchain","Delve (debugger)","Docker"],
+    level:"Intermediate",
+    notes:"Concurrency primitives (goroutines) শিখলে দ্রুত সার্ভিস তৈরি যায়।"
+  },
+  rust:{
+    name:"Rust",
+    summary:"মেমরি নিরাপত্তা ও পারফরম্যান্সের দিকে জোর—C/C++ বিকল্প হিসেবে জনপ্রিয় হচ্ছে।",
+    domains:["Systems","Embedded","WebAssembly","CLI Tools"],
+    frameworks:["Tokio","Actix"],
+    tools:["cargo","rustc","rustfmt","Clippy"],
+    level:"Advanced",
+    notes:"Ownership model প্রথমে কষ্টদায়ক, পরে সুবিধা দেয়।"
+  },
+  swift:{
+    name:"Swift",
+    summary:"Apple প্ল্যাটফর্মের জন্য আধুনিক ভাষা; iOS/macOS অ্যাপ ডেভে ব্যবহৃত।",
+    domains:["iOS Apps","macOS Apps"],
+    frameworks:["SwiftUI","UIKit","Vapor (server-side)"],
+    tools:["Xcode","Swift Package Manager"],
+    level:"Intermediate",
+    notes:"iOS ডেভে Swift শেখা এখন অপরিহার্য।"
+  },
+  kotlin:{
+    name:"Kotlin",
+    summary:"Android-এর আধুনিক ভাষা; JVM-ভিত্তিক সার্ভিসেও ব্যবহার হয়।",
+    domains:["Android Apps","Backend (Ktor, Spring)"],
+    frameworks:["Ktor","Spring (with Kotlin)"],
+    tools:["Android Studio","IntelliJ IDEA","Gradle"],
+    level:"Intermediate",
+    notes:"Java থেকে মাইগ্রেট করলে Kotlin স্ট্রং অপশন।"
+  },
+  scala:{
+    name:"Scala",
+    summary:"JVM-এ functional ও object-oriented বৈশিষ্ট্য; Big Data/ Spark কাজে ব্যবহৃত।",
+    domains:["Big Data","Functional Programming"],
+    frameworks:["Apache Spark","Play Framework"],
+    tools:["sbt","IntelliJ"],
+    level:"Advanced",
+    notes:"Spark ব্যবহার করে ডেটা ইকোসিস্টেমে গুরুত্বপূর্ন।"
+  },
+  r:{
+    name:"R",
+    summary:"স্ট্যাটিস্টিক্স ও ডেটা ভিজ্যুয়ালাইজেশনের জন্য বিশেষায়িত।",
+    domains:["Statistical Analysis","Data Visualization","Data Science"],
+    frameworks:["Tidyverse","Shiny"],
+    tools:["RStudio","CRAN","Rscript"],
+    level:"Intermediate",
+    notes:"অ্যাকাডেমিক আর স্ট্যাটিস্টিক্যাল কাজের জন্য উত্তম।"
+  },
+  matlab:{
+    name:"MATLAB",
+    summary:"ইঞ্জিনিয়ারিং ও সায়েন্টিফিক কম্পিউটেশনে ব্যবহৃত বুদ্ধিমান টুল (পেইড)।",
+    domains:["Signal Processing","Control Systems","Research"],
+    frameworks:[],
+    tools:["MATLAB IDE","Toolboxes"],
+    level:"Advanced (academic)",
+    notes:"শিক্ষা ও রিসার্চে বহুল ব্যবহৃত।"
+  },
+  sql:{
+    name:"SQL",
+    summary:"রিলেশনাল ডেটাবেস কুয়েরি ভাষা — ডেটা স্টোর ও কুয়েরির জন্য অপরিহার্য।",
+    domains:["Databases","Analytics","ETL"],
+    frameworks:[],
+    tools:["MySQL","PostgreSQL","SQLite","MS SQL Server","DBeaver","pgAdmin"],
+    level:"Beginner → Intermediate",
+    notes:"প্রত্যেক ডেভেলপারকে SQL ধারণা থাকা উচিত।"
+  },
+  dart:{
+    name:"Dart",
+    summary:"Flutter-এর জন্য ব্যবহৃত; ক্রস-প্ল্যাটফর্ম UI dev এ জনপ্রিয়।",
+    domains:["Mobile (Flutter)","Web","Desktop"],
+    frameworks:["Flutter"],
+    tools:["Flutter SDK","Android Studio","VS Code"],
+    level:"Beginner → Intermediate",
+    notes:"একবার শিখলে iOS/Android একই কোডবেসে কাজ হয়।"
+  },
+  perl:{
+    name:"Perl",
+    summary:"টেক্সট প্রসেসিং ও স্ক্রিপ্টিংয়ে ঐতিহ্যবাহী ভাষা।",
+    domains:["Text Processing","Scripting","Legacy Systems"],
+    frameworks:[],
+    tools:["Perl","CPAN"],
+    level:"Legacy / Intermediate",
+    notes:"নতুন প্রজেক্টে কম ব্যবহৃত, তবে কিছু সিস্টেমে আছে।"
+  },
+  lua:{
+    name:"Lua",
+    summary:"স্মল, এমবেডেবল ভাষা; গেম ইঞ্জিন ও কনফিগারেশন স্ক্রিপ্টে জনপ্রিয়।",
+    domains:["Game Scripting","Embedded Scripting"],
+    frameworks:[],
+    tools:["Lua","LuaRocks"],
+    level:"Beginner → Intermediate",
+    notes:"Roblox/Corona ইত্যাদিতে ব্যবহৃত।"
+  },
+  haskell:{
+    name:"Haskell",
+    summary:"পিওর ফাংশনাল ল্যাঙ্গুয়েজ; একাডেমিক ও রিসার্চ কাজে।",
+    domains:["Functional Programming","Research"],
+    frameworks:[],
+    tools:["GHC","Stack","Cabal"],
+    level:"Advanced",
+    notes:"ফাংশনাল কনসেপ্ট শিখার জন্য চমৎকার।"
+  },
+  assembly:{
+    name:"Assembly",
+    summary:"লো-লেভেল মেশিন কোড; হার্ডওয়্যার কন্ট্রোল ও অপটিমাইজেশনে ব্যবহৃত।",
+    domains:["Firmware","Bootloaders","OS Dev"],
+    frameworks:[],
+    tools:["NASM","GDB"],
+    level:"Advanced",
+    notes:"মেমরি ও CPU কিভাবে কাজ করে তা বোঝার জন্য সহায়ক।"
+  },
+  shell:{
+    name:"Shell (Bash)",
+    summary:"ইউনিক্স শেল স্ক্রিপ্টিং — automation, ops ও small scripts এ ব্যবহৃত।",
+    domains:["Scripting","DevOps","Automation"],
+    frameworks:[],
+    tools:["bash","zsh","shell utilities"],
+    level:"Beginner → Intermediate",
+    notes:"প্রয়োজনীয় ডেভঅপস স্কিল।"
+  }
+};
+
+/* ============================
+   সম্পর্ক, শেখার পথ, টুলস, AI ইউসেজ — সাধারণ গাইড
+   ============================ */
+const RELATIONSHIPS = [
+  "C → ভিত্তি: অনেক উচ্চস্তরের ভাষা (C++, Rust) C-এর ধারণা থেকে প্রভাবিত।",
+  "C++ → সিস্টেম/গেম ডেভে ব্যবহৃত; STL ও অগ্রগতি পারফরম্যান্স দেয়।",
+  "Java → C/C++ থেকে ধারনা নিয়ে JVM ও managed runtime দেয়।",
+  "C# → Java-র অনুপ্রেরণায় .NET ইকোসিস্টেমে তৈরি।",
+  "JavaScript → ওয়েব ফ্রন্টএন্ডের জন্য অপরিহার্য; Node.js-এ সার্ভারও সম্ভব।",
+  "TypeScript → JavaScript-এর টাইপ-সিস্টেম সংযোজন; বড় প্রোজেক্টে ব্যবহৃত।",
+  "Python → Data Science/ML-এ অত্যন্ত ব্যবহৃত; সহজ সিনট্যাক্স।",
+  "Go, Rust → আধুনিক সিস্টেম ভাষা; concurrency ও امنیت (safety) লক্ষ্য করে।",
+  "SQL → সমস্ত ডেটা-অপস ও ব্যাকএন্ডে অপরিহার্য।",
+  "Dart/Flutter → দ্রুত ক্রস-প্ল্যাটফর্ম UI ডেভেলপ করতে ব্যবহৃত।"
+];
+
+const LEARNING_PATHS = [
+  "বিনিয়োগ কম রাখতে চাইলে: 1) Python/JavaScript শেখা 2) ছোট প্রোজেক্ট করে ডিপ লার্নিং।",
+  "অ্যাপ ডেভ: Android → Kotlin, iOS → Swift।",
+  "ওয়েব: Frontend → JavaScript (React/Vue), Backend → Node.js/Python/Java/Go।",
+  "ডেটা সায়েন্স: Python → Pandas/NumPy → ML (scikit-learn/TensorFlow) → Kaggle প্রোজেক্ট।",
+  "সিস্টেম/এমবেডেড: C → C++ → Assembly (জরুরি হলে)।",
+  "গেম ডেভ: C++ (Unreal) বা C# (Unity)।"
+];
+
+const TOOLS_GUIDE = [
+  "Editors/IDEs: VS Code (general), PyCharm (Python), IntelliJ (Java/Kotlin), Xcode (Swift), Visual Studio (C++/C#).",
+  "Version Control: Git + GitHub/GitLab/Bitbucket (প্রতিটি প্রোজেক্টে অপরিহার্য)।",
+  "Containers: Docker — dev/testing/production parity রক্ষায় সহায়ক।",
+  "CI/CD: GitHub Actions, GitLab CI, Jenkins — অটোমেশন জন্য।",
+  "Databases: PostgreSQL, MySQL (RDBMS), MongoDB (NoSQL)।",
+  "Debugging/Profiling: Chrome DevTools, GDB, Valgrind, PyCharm Debugger।"
+];
+
+const AI_USAGE = [
+  "কোড জেনারেশন: ChatGPT, GitHub Copilot — নতুন ফাংশন বা টেমপ্লেট তৈরিতে দ্রুততা দেয়।",
+  "ডিবাগিং ও রুটিন ইস্যু: ChatGPT/AI লিন্টারস — স্ট্যাক ট্রেস বোঝা ও কনসোল পরীক্ষায় সহায়ক।",
+  "কোড রিভিউ ও অপটিমাইজেশন: AI টুলস (Sourcery, CodeGuru) — কোডকে উন্নত করে।",
+  "টেস্ট কেস জেনারেশন: AI দিয়ে ইউনিট টেস্ট স্বয়ংক্রিয়ভাবে বানানো যায়।",
+  "ডকুমেন্টেশন ও টিউটোরিয়াল: ChatGPT দিয়ে রিসোর্স সাজানো ও কনটেন্ট তৈরি।"
+];
+
+/* ============================
+   DOM init: populate select with languages
+   ============================ */
+const langSelect = document.getElementById("langSelect");
+Object.keys(LANG).forEach(k=>{
+  const opt = document.createElement("option");
+  opt.value = k;
+  opt.textContent = LANG[k].name;
+  langSelect.appendChild(opt);
+});
+
+/* Helper: create search links for a language */
+function makeLinks(name){
+  const q = encodeURIComponent(name + " tutorials");
+  const githubQ = encodeURIComponent("site:github.com " + name + " project");
+  return {
+    google:`https://www.google.com/search?q=${q}`,
+    youtube:`https://www.youtube.com/results?search_query=${q}`,
+    githubDork:`https://www.google.com/search?q=${githubQ}`,
+    officialSearch:`https://www.google.com/search?q=${encodeURIComponent(name + " official docs")}`
+  };
+}
+
+/* Render language detail into infoCard */
+const infoCard = document.getElementById("infoCard");
+function renderLang(key){
+  if(!key || !LANG[key]){ infoCard.style.display='none'; return; }
+  const it = LANG[key];
+  const links = makeLinks(it.name);
+  const domainsHTML = it.domains.map(d=>`<li>${d}</li>`).join("");
+  const fwHTML = it.frameworks.length? it.frameworks.map(f=>`<span class="pill">${f}</span>`).join(" ") : "<div class='small'>(No major frameworks)</div>";
+  const toolsHTML = it.tools.length? it.tools.map(t=>`<li>${t}</li>`).join("") : "<li>—</li>";
+  const html = `
+    <div class="meta">ল্যাঙ্গুয়েজ: <strong>${it.name}</strong> • স্তর: <em>${it.level}</em></div>
+    <h2>${it.name}</h2>
+    <div class="small" style="margin-bottom:10px">${it.summary}</div>
+
+    <div class="grid2">
+      <div class="card" style="padding:12px">
+        <h3 class="small">প্রধান ব্যবহারের ক্ষেত্র</h3>
+        <ul>${domainsHTML}</ul>
+        <h3 class="small">নোট</h3>
+        <div class="small">${it.notes || ""}</div>
+      </div>
+
+      <div class="card" style="padding:12px">
+        <h3 class="small">ফ্রেমওয়ার্ক/লাইব্রেরি</h3>
+        <div style="margin-bottom:10px">${fwHTML}</div>
+        <h3 class="small">প্রয়োজনীয় টুলস</h3>
+        <ul>${toolsHTML}</ul>
+      </div>
+    </div>
+
+    <h3 class="small">Resources & Quick Search</h3>
+    <ul>
+      <li><a href="${links.google}" target="_blank" rel="noopener">Google: "${it.name} tutorials"</a></li>
+      <li><a href="${links.youtube}" target="_blank" rel="noopener">YouTube: "${it.name} tutorials"</a></li>
+      <li><a href="${links.githubDork}" target="_blank" rel="noopener">Google Dork: GitHub projects for ${it.name}</a></li>
+      <li class="small">Official docs: <a href="${links.officialSearch}" target="_blank" rel="noopener">Search "${it.name} official docs"</a></li>
+    </ul>
+
+    <div class="note">শুরু করার পরামর্শ: প্রথমে বেসিক কনসেপ্ট (ভ্যারিয়েবল, লুপ, ফাংশন), তারপর ছোট প্রোজেক্ট (ToDo, CRUD) করুন। IDES: ${it.tools.slice(0,2).join(", ")} ব্যবহার করে শুরু করুন।</div>
+  `;
+  infoCard.innerHTML = html;
+  infoCard.style.display = 'block';
+  // hide allCard if visible
+  document.getElementById("allCard").style.display = 'none';
+}
+
+/* Render condensed list of all languages */
+function renderAll(){
+  const allCard = document.getElementById("allCard");
+  const allList = document.getElementById("allList");
+  let html = '<div style="display:flex;flex-direction:column;gap:10px">';
+  Object.keys(LANG).forEach(k=>{
+    const it = LANG[k];
+    html += `<div style="padding:10px;border-radius:10px;background:#fbfdff;border:1px solid #e6f4ff;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <strong style="font-size:15px">${it.name}</strong>
+        <div class="small" style="margin-top:6px">${it.summary}</div>
+        <div class="small" style="margin-top:6px">Domains: ${it.domains.slice(0,3).join(", ") || "—"}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="ghost" data-lang="${k}" style="min-width:120px">View Details</button>
+        <a href="${makeLinks(it.name).google}" target="_blank" style="font-size:13px;color:var(--accent)">Google</a>
+      </div>
+    </div>`;
+  });
+  html += "</div>";
+  allList.innerHTML = html;
+  allCard.style.display = 'block';
+  infoCard.style.display = 'none';
+
+  // add click listeners to view details buttons inside all list
+  Array.from(allList.querySelectorAll('button[data-lang]')).forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const key = e.currentTarget.getAttribute('data-lang');
+      document.getElementById("langSelect").value = key;
+      renderLang(key);
+      // scroll to info
+      window.scrollTo({top: infoCard.offsetTop - 20, behavior:'smooth'});
+    });
+  });
+}
+
+/* Populate right-panel lists (relationships, learn, tools, ai) */
+function populateRightPanel(){
+  const relList = document.getElementById("relList");
+  relList.innerHTML = RELATIONSHIPS.map(s=>`<li>${s}</li>`).join("");
+  const learnList = document.getElementById("learnList");
+  learnList.innerHTML = LEARNING_PATHS.map(s=>`<li>${s}</li>`).join("");
+  const toolsList = document.getElementById("toolsList");
+  toolsList.innerHTML = TOOLS_GUIDE.map(s=>`<li>${s}</li>`).join("");
+  const aiList = document.getElementById("aiList");
+  aiList.innerHTML = AI_USAGE.map(s=>`<li>${s}</li>`).join("");
+}
+populateRightPanel();
+
+/* Event handlers */
+langSelect.addEventListener('change', function(){
+  renderLang(this.value);
+});
+
+document.getElementById("showAll").addEventListener('click', renderAll);
+
+document.getElementById("reset").addEventListener('click', function(){
+  document.getElementById("langSelect").value = "";
+  document.getElementById("searchInput").value = "";
+  infoCard.style.display = 'none';
+  document.getElementById("allCard").style.display = 'none';
+});
+
+/* Search filter: searchInput filters languages by name, domain, frameworks, summary */
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener('input', function(){
+  const q = this.value.trim().toLowerCase();
+  if(!q){
+    document.getElementById("allCard").style.display = 'none';
+    return;
+  }
+  // build filtered list
+  const keys = Object.keys(LANG).filter(k=>{
+    const it = LANG[k];
+    const composite = (it.name + " " + it.summary + " " + it.domains.join(" ") + " " + it.frameworks.join(" ")).toLowerCase();
+    return composite.includes(q);
+  });
+  // show results
+  const allList = document.getElementById("allList");
+  let html = "<div style='display:flex;flex-direction:column;gap:10px'>";
+  if(keys.length===0){
+    html += `<div class="small">No results for "${q}"</div>`;
+  } else {
+    keys.forEach(k=>{
+      const it = LANG[k];
+      html += `<div style="padding:10px;border-radius:10px;background:#fbfdff;border:1px solid #e6f4ff;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>${it.name}</strong>
+          <div class="small" style="margin-top:6px">${it.summary}</div>
+          <div class="small" style="margin-top:6px">Domains: ${it.domains.slice(0,3).join(", ") || "—"}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="ghost" data-lang="${k}" style="min-width:120px">View Details</button>
+          <a href="${makeLinks(it.name).google}" target="_blank" style="font-size:13px;color:var(--accent)">Google</a>
+        </div>
+      </div>`;
+    });
+  }
+  html += "</div>";
+  allList.innerHTML = html;
+  document.getElementById("allCard").style.display = 'block';
+  infoCard.style.display = 'none';
+
+  // add click listeners
+  Array.from(allList.querySelectorAll('button[data-lang]')).forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const key = e.currentTarget.getAttribute('data-lang');
+      document.getElementById("langSelect").value = key;
+      renderLang(key);
+      window.scrollTo({top: infoCard.offsetTop - 20, behavior:'smooth'});
+    });
+  });
+});
+
+/* Accordion behaviour for right panel */
+document.querySelectorAll('.acc-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-acc');
+    const panel = document.getElementById(id);
+    const isOpen = panel.style.display === 'block';
+    // close all
+    document.querySelectorAll('.acc-panel').forEach(p=>p.style.display='none');
+    // toggle selected
+    panel.style.display = isOpen ? 'none' : 'block';
+  });
+});
+
+/* Optional: on load, show Python by default */
+renderLang('python');
+document.getElementById("langSelect").value = 'python';
+</script>
+</body>
+</html>
